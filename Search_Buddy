@@ -1,0 +1,573 @@
+import re
+import tkinter as tk
+from tkinter import *
+from tkinter import ttk, filedialog
+import pandas as pd
+import glob
+import PyPDF2 as PDF2
+import os
+import nltk
+
+#AIM: Search through Articles of Association (AoAs) in PDFs
+#Previous step: ensure AoAs have OCR (with Adobe)
+#Difference with previous version: uses NLP (Natural Language Processing) to remove irrelevant data and improve search quality
+#NB: for exe it is faster if onedir instead of onefile (less unpacking necessary)
+
+#Main priorities
+#TODO Build match search function (to find exact search)
+#TODO Ensure updated treeview can be exported as excel
+#TODO Show amount of results
+#TODO Speed up the programme
+#TODO Build a progress bar
+#TODO Modernise Software Look (CustomTkinter)
+#TODO Show keywords inserted
+#TODO Create faster version (or move replace to different new widget: tokenized (clean version e.g.)
+
+#STRUCTURE FOR THE SOFTWARE
+root = tk.Tk()
+root.title('SEARCH BUDDY - AoA Tokenized Version')
+root.geometry('600x600')
+
+# Create frame
+my_frame1 = Frame(root)
+my_frame1.pack(pady=20, padx=20)
+
+my_frame = Frame(root)
+my_frame.pack(pady=20, padx=20)
+
+my_frame0 = Frame(root)
+my_frame0.pack(pady=20, padx=20)
+
+# Create treeview
+my_tree = ttk.Treeview(my_frame) #add treeview to frame
+
+def search_textbox(text_widget, keyword, tag):
+    'Used to highlight extracted text'
+    pos = '1.0'
+    while True:
+        idx = text_widget.search(keyword, pos, END)
+        if not idx:
+            break
+        pos = '{}+{}c'.format(idx, len(keyword))
+        text_widget.tag_add(tag, idx, pos)
+
+def get_selection():
+    'Enables to click on file and see extracted data based on keywords'
+    my_textbox.delete(1.0, END)
+    selected_item = my_tree.focus()
+    details = my_tree.item(selected_item)
+    values = details.get('values')
+    my_textbox.insert(1.0, values)
+    #highlight text. Highlight is case-sensitive and only works if no regex characters (so  no '*', '|', etc)
+    #type individual keyword to highlight in 'Submit General|Highlight' and click on submit. Maximum of 20 keywords to highlight'
+    my_textbox.tag_configure('highlight yellow', background='yellow')
+    try:
+        search_textbox(my_textbox, keywords[0], 'highlight yellow')
+        search_textbox(my_textbox, keywords[1], 'highlight yellow')
+        search_textbox(my_textbox, keywords[2], 'highlight yellow')
+        search_textbox(my_textbox, keywords[3], 'highlight yellow')
+        search_textbox(my_textbox, keywords[4], 'highlight yellow')
+        search_textbox(my_textbox, keywords[5], 'highlight yellow')
+        search_textbox(my_textbox, keywords[6], 'highlight yellow')
+        search_textbox(my_textbox, keywords[7], 'highlight yellow')
+        search_textbox(my_textbox, keywords[8], 'highlight yellow')
+        search_textbox(my_textbox, keywords[9], 'highlight yellow')
+        search_textbox(my_textbox, keywords[10], 'highlight yellow')
+        search_textbox(my_textbox, keywords[11], 'highlight yellow')
+        search_textbox(my_textbox, keywords[12], 'highlight yellow')
+        search_textbox(my_textbox, keywords[13], 'highlight yellow')
+        search_textbox(my_textbox, keywords[14], 'highlight yellow')
+        search_textbox(my_textbox, keywords[15], 'highlight yellow')
+        search_textbox(my_textbox, keywords[16], 'highlight yellow')
+        search_textbox(my_textbox, keywords[17], 'highlight yellow')
+        search_textbox(my_textbox, keywords[18], 'highlight yellow')
+        search_textbox(my_textbox, keywords[19], 'highlight yellow')
+    except IndexError:
+        pass
+
+#list of keywords
+keywords = []
+
+def submit_keywords():
+    clear_entries()
+    keyword = my_entry1.get()
+    keywords.append(keyword)
+    my_textbox0.insert(1.0, keywords)
+    print(keywords)
+
+def submit_specific():
+    clear_entries()
+    keyword = my_entry2.get()
+    keywords.append(keyword)
+    my_textbox0.insert(1.0, keywords)
+    print(keywords)
+
+def submit_token():
+    clear_entries()
+    keyword = my_entry_split.get()
+    keywords.append(keyword)
+    my_textbox0.insert(1.0, keywords)
+    print(keywords)
+
+def clear_keywords():
+    keywords.clear()
+    my_textbox0.delete(1.0, END)
+    #Clear old entries
+    all_names.clear()
+    specific_keyword.clear()
+
+#Datasets for search results
+all_names = [] #to store file names
+specific_keyword = [] #to store results
+
+def save_as_excel():
+    file = filedialog.asksaveasfilename(defaultextension=".xlsx")
+    df = pd.DataFrame()
+    df['File'] = all_names
+    df[keywords[1]] = specific_keyword
+    df.to_excel(str(file) + '.xlsx')
+    all_names.clear()
+    specific_keyword.clear()
+
+def search_PDF():
+    'Opens the folder where PDFs are. Then ensures names of files and search results for files are appended'
+    file_names = filedialog.askdirectory()
+    for f in glob.glob(file_names + '\*.pdf'):
+        all_names.append(f)
+
+    #search within general keyword and first specific keyword based on def search_PDF1
+    for f in glob.glob(file_names + '\*.pdf'):
+        data = search_PDF1(f, str(keywords[0]), str(keywords[1])) #provides the keywords the used submitted
+        specific_keyword.append(data)
+
+    df = pd.DataFrame()
+    df['File'] = all_names
+    df[keywords[1]] = specific_keyword
+
+    #Clear old treeview
+    clear_tree()
+
+    #Set up new treeview
+    my_tree['column'] = list(df.columns) #to set treeview equal to df column
+    my_tree['show'] = 'headings'
+    #loop through column list for headers
+    for column in my_tree['column']:
+        my_tree.heading(column, text=column)
+
+    #put data in treeview
+    df_rows = df.to_numpy().tolist() #from pandas to numpy to python list
+    for row in df_rows:
+        my_tree.insert('', 'end', values=row)
+
+    #pack treeview finally
+    my_tree.pack()
+
+    #pack selection button
+    my_button.pack()
+    my_button3.pack()
+
+    #pack textbox
+    my_textbox.pack()
+
+def search_PDF_tokenized_0():
+    'Opens the folder where PDFs are. Then ensures names of files and search results for files are appended'
+    file_names = filedialog.askdirectory()
+    for f in glob.glob(file_names + '\*.pdf'):
+        all_names.append(f)
+
+    #search within general keyword and first specific keyword based on def search_PDF1
+    for f in glob.glob(file_names + '\*.pdf'):
+        data = search_PDF_Tokenized(f, str(keywords[0]), str(keywords[1]), str(keywords[2]), str(keywords[3])) #provides the keywords the used submitted
+        specific_keyword.append(data)
+
+    df = pd.DataFrame()
+    df['File'] = all_names
+    df[keywords[1]] = specific_keyword
+
+    #Clear old treeview
+    clear_tree()
+
+    #Set up new treeview
+    my_tree['column'] = list(df.columns) #to set treeview equal to df column
+    my_tree['show'] = 'headings'
+    #loop through column list for headers
+    for column in my_tree['column']:
+        my_tree.heading(column, text=column)
+
+    #put data in treeview
+    df_rows = df.to_numpy().tolist() #from pandas to numpy to python list
+    for row in df_rows:
+        my_tree.insert('', 'end', values=row)
+
+    #pack treeview finally
+    my_tree.pack()
+
+    #pack selection button
+    my_button.pack()
+    my_button3.pack()
+
+    #pack textbox
+    my_textbox.pack()
+
+def search_PDF_tokenized_NER_0():
+    'Opens the folder where PDFs are. Then ensures names of files and search results for files are appended'
+    file_names = filedialog.askdirectory()
+    for f in glob.glob(file_names + '\*.pdf'):
+        all_names.append(f)
+
+    #search within general keyword and first specific keyword based on def search_PDF1
+    for f in glob.glob(file_names + '\*.pdf'):
+        data = search_PDF_Tokenized_NER(f, str(keywords[0]), str(keywords[1]), str(keywords[2]), str(keywords[3])) #provides the keywords the used submitted
+        specific_keyword.append(data)
+
+    df = pd.DataFrame()
+    df['File'] = all_names
+    df[keywords[1]] = specific_keyword
+
+    #Clear old treeview
+    clear_tree()
+
+    #Set up new treeview
+    my_tree['column'] = list(df.columns) #to set treeview equal to df column
+    my_tree['show'] = 'headings'
+    #loop through column list for headers
+    for column in my_tree['column']:
+        my_tree.heading(column, text=column)
+
+    #put data in treeview
+    df_rows = df.to_numpy().tolist() #from pandas to numpy to python list
+    for row in df_rows:
+        my_tree.insert('', 'end', values=row)
+
+    #pack treeview finally
+    my_tree.pack()
+
+    #pack selection button
+    my_button.pack()
+    my_button3.pack()
+
+    #pack textbox
+    my_textbox.pack()
+
+def search_PDF_tokenized_Int_0():
+    'Opens the folder where PDFs are. Then ensures names of files and search results for files are appended'
+    file_names = filedialog.askdirectory()
+    for f in glob.glob(file_names + '\*.pdf'):
+        all_names.append(f)
+
+    #search within general keyword and first specific keyword based on def search_PDF1
+    for f in glob.glob(file_names + '\*.pdf'):
+        data = search_PDF_Tokenized_Int(f, str(keywords[0]), str(keywords[1]), str(keywords[2]), str(keywords[3])) #provides the keywords the used submitted
+        specific_keyword.append(data)
+
+    df = pd.DataFrame()
+    df['File'] = all_names
+    df[keywords[1]] = specific_keyword
+
+    #Clear old treeview
+    clear_tree()
+
+    #Set up new treeview
+    my_tree['column'] = list(df.columns) #to set treeview equal to df column
+    my_tree['show'] = 'headings'
+    #loop through column list for headers
+    for column in my_tree['column']:
+        my_tree.heading(column, text=column)
+
+    #put data in treeview
+    df_rows = df.to_numpy().tolist() #from pandas to numpy to python list
+    for row in df_rows:
+        my_tree.insert('', 'end', values=row)
+
+    #pack treeview finally
+    my_tree.pack()
+
+    #pack selection button
+    my_button.pack()
+    my_button3.pack()
+
+    #pack textbox
+    my_textbox.pack()
+
+def search_PDF1(f, keyword, keyword1):
+    'Opens, reads and extracts PDF'
+    'Uses two keywords. First keyword is general'
+    'Second keyword searches within results of general keyword (control f within control f)'
+    'Tip: if looking for one keyword only (instead of control f within control f), use same keyword twice (as general and specific keyword)'
+    all_text = []
+    general_keywords = []
+    pdffile = open(f, 'rb')  # opens the PDF file
+    pdfreader = PDF2.PdfFileReader(pdffile)  # reads the PDF file
+    numOfPages = pdfreader.getNumPages()  # gets all page numbers
+    for i in range(0, numOfPages):  # loop through all pages
+        page = pdfreader.getPage(i)  # gets each page
+        page_extract = page.extractText()  # extract the text from PDF
+        all_text.append(page_extract)  # appends text
+        for elem in all_text:
+            if re.findall(keyword, elem, re.IGNORECASE):
+                general_keywords.append(elem)
+    specific_keywords = [elem1 for elem1 in general_keywords if re.findall(keyword1, elem1, re.IGNORECASE)] #switch to match/findall/other functions of RE + Remove Ignorecase to search for titles (specific search)?
+    final_specific_keywords = list(dict.fromkeys(specific_keywords)) #in order to remove duplicate results
+    final_specific_keywords = str(final_specific_keywords)
+    final_specific_keywords = final_specific_keywords.replace("xa0", "")
+    final_specific_keywords = final_specific_keywords.replace("[", "")
+    final_specific_keywords = final_specific_keywords.replace("]", "")
+    final_specific_keywords = final_specific_keywords.replace("'", "")
+    final_specific_keywords = final_specific_keywords.replace("\\n", "")
+    final_specific_keywords = final_specific_keywords.replace("\\xad", " ")
+    final_specific_keywords = final_specific_keywords.replace(r"\ ", " ")
+    final_specific_keywords = final_specific_keywords.replace(r"\\", " ")
+    final_specific_keywords = final_specific_keywords.replace(r"--", "")
+    final_specific_keywords = final_specific_keywords.replace(r"*", "")
+    return final_specific_keywords
+
+def search_PDF_Tokenized(f, keyword, keyword1, keyword2, keyword3):
+    'Opens, reads and extracts PDF'
+    'Uses first two keywords to find raw data. First keyword is general'
+    'Second keyword searches within results of general keyword (control f within control f)'
+    'Third keyword is used to tokenize (i.e. extract sentence that contains keyword)'
+    'Fourth keyword is used to ensure validity (ensure third keyword is relevant in this context)'
+    'Tip1: if looking for one keyword only (instead of control f within control f), use same keyword twice (as general and specific keyword)'
+    'Tip2: use the same keywords in keyword and keyword1 in order to ensure all data is captured'
+    all_text = []
+    general_keywords = []
+    tokenized_results = []
+    pdffile = open(f, 'rb')  # opens the PDF file
+    pdfreader = PDF2.PdfFileReader(pdffile)  # reads the PDF file
+    numOfPages = pdfreader.getNumPages()  # gets all page numbers
+    for i in range(0, numOfPages):  # loop through all pages
+        page = pdfreader.getPage(i)  # gets each page
+        page_extract = page.extractText()  # extract the text from PDF
+        all_text.append(page_extract)  # appends text
+        for elem in all_text:
+            if re.findall(keyword, elem, re.IGNORECASE):
+                general_keywords.append(elem)
+    specific_keywords = [elem1 for elem1 in general_keywords if re.findall(keyword1, elem1, re.IGNORECASE)]
+    final_specific_keywords = list(dict.fromkeys(specific_keywords)) #in order to remove duplicate results
+    final_specific_keywords = str(final_specific_keywords) #to string in order to ensure tokenization is possible
+    tokenized = nltk.sent_tokenize(final_specific_keywords, "dutch") #tokenizes the paragraph (i.e. ensure elements are cut into new sentence, starting at beginning of sentence). Use word_tokenize to do this for a particular sentence (instead of paragraph)
+    for elem in tokenized:
+        if re.findall(keyword2, elem, re.IGNORECASE) and re.findall(keyword3, elem, re.IGNORECASE): #uses two tokens (one as start and second as validation) to filter results
+            tokenized_results.append(elem)
+    tokenized_results = str(tokenized_results)
+    tokenized_results = tokenized_results.replace("xa0", "")
+    tokenized_results = tokenized_results.replace("[", "")
+    tokenized_results = tokenized_results.replace("]", "")
+    tokenized_results = tokenized_results.replace("'", "")
+    tokenized_results = tokenized_results.replace("\\n", "")
+    tokenized_results = tokenized_results.replace("\\xad", " ")
+    tokenized_results = tokenized_results.replace(r"\ ", " ")
+    tokenized_results = tokenized_results.replace(r"\\", " ")
+    tokenized_results = tokenized_results.replace(r"--", "")
+    tokenized_results = tokenized_results.replace(r"*", "")
+    return tokenized_results
+
+
+def search_PDF_Tokenized_NER(f, keyword, keyword1, keyword2, keyword3):
+    'Opens, reads and extracts PDF'
+    'Uses first two keywords to find raw data. First keyword is general'
+    'Second keyword searches within results of general keyword (control f within control f)'
+    'Third keyword is used to tokenize (i.e. extract sentence that contains keyword)'
+    'Fourth keyword is used to ensure validity (ensure third keyword is relevant in this context)'
+    'Uses Named Entity Recognition to search within results. Looks for persons and organizations'
+    'Tip1: if looking for one keyword only (instead of control f within control f), use same keyword twice (as general and specific keyword)'
+    'Tip2: use the same keywords in keyword and keyword1 in order to ensure all data is captured'
+    all_text = []
+    general_keywords = []
+    tokenized_results = []
+    final_tokenized_results = []
+    pdffile = open(f, 'rb')  # opens the PDF file
+    pdfreader = PDF2.PdfFileReader(pdffile)  # reads the PDF file
+    numOfPages = pdfreader.getNumPages()  # gets all page numbers
+    for i in range(0, numOfPages):  # loop through all pages
+        page = pdfreader.getPage(i)  # gets each page
+        page_extract = page.extractText()  # extract the text from PDF
+        all_text.append(page_extract)  # appends text
+        for elem in all_text:
+            if re.findall(keyword, elem, re.IGNORECASE):
+                general_keywords.append(elem)
+    specific_keywords = [elem1 for elem1 in general_keywords if re.findall(keyword1, elem1, re.IGNORECASE)]
+    final_specific_keywords = list(dict.fromkeys(specific_keywords)) #in order to remove duplicate results
+    final_specific_keywords = str(final_specific_keywords) #to string in order to ensure tokenization is possible
+    tokenized = nltk.sent_tokenize(final_specific_keywords, "dutch") #tokenizes the paragraph (i.e. ensure elements are cut into new sentence, starting at beginning of sentence). Use word_tokenize to do this for a particular sentence (instead of paragraph)
+    for elem in tokenized:
+        if re.findall(keyword2, elem, re.IGNORECASE) and re.findall(keyword3, elem, re.IGNORECASE): #uses two tokens (one as start and second as validation) to filter results
+            tokenized_results.append(elem)
+    for i in tokenized_results:
+        words = nltk.word_tokenize(i) #tokenizes each sentence (cuts off sentence), rather than entire paragraph
+        tagged = nltk.pos_tag(words) #create a tag for each word
+        named_ent = nltk.ne_chunk(tagged) #chunks the tags into specific named entities
+        for x in str(named_ent).split("\n"): #splits each sentence
+            if "ORGANIZATION" or "PERSON"and "/NNP" in x: #looks specifically for Organizations/Persons and NNPs (word with caps)
+                final_tokenized_results.append(x)
+    final_tokenized_results = str(final_tokenized_results)
+    final_tokenized_results = final_tokenized_results.replace("xa0", "")
+    final_tokenized_results = final_tokenized_results.replace("[", "")
+    final_tokenized_results = final_tokenized_results.replace("]", "")
+    final_tokenized_results = final_tokenized_results.replace("'", "")
+    final_tokenized_results = final_tokenized_results.replace("\\n", "")
+    final_tokenized_results = final_tokenized_results.replace("\\xad", " ")
+    final_tokenized_results = final_tokenized_results.replace(r"\ ", " ")
+    final_tokenized_results = final_tokenized_results.replace(r"\\", " ")
+    final_tokenized_results = final_tokenized_results.replace(r"--", "")
+    final_tokenized_results = final_tokenized_results.replace(r"*", "")
+    return final_tokenized_results
+
+def search_PDF_Tokenized_Int(f, keyword, keyword1, keyword2, keyword3):
+    'Opens, reads and extracts PDF'
+    'Uses first two keywords to find raw data. First keyword is general'
+    'Second keyword searches within results of general keyword (control f within control f)'
+    'Third keyword is used to tokenize (i.e. extract sentence that contains keyword)'
+    'Fourth keyword is used to ensure validity (ensure third keyword is relevant in this context)'
+    'Uses Named Entity Recognition to search within results. Looks for integers'
+    'Tip1: if looking for one keyword only (instead of control f within control f), use same keyword twice (as general and specific keyword)'
+    'Tip2: use the same keywords in keyword and keyword1 in order to ensure all data is captured'
+    all_text = []
+    general_keywords = []
+    tokenized_results = []
+    pdffile = open(f, 'rb')  # opens the PDF file
+    pdfreader = PDF2.PdfFileReader(pdffile)  # reads the PDF file
+    numOfPages = pdfreader.getNumPages()  # gets all page numbers
+    for i in range(0, numOfPages):  # loop through all pages
+        page = pdfreader.getPage(i)  # gets each page
+        page_extract = page.extractText()  # extract the text from PDF
+        all_text.append(page_extract)  # appends text
+        for elem in all_text:
+            if re.findall(keyword, elem, re.IGNORECASE):
+                general_keywords.append(elem)
+    specific_keywords = [elem1 for elem1 in general_keywords if re.findall(keyword1, elem1, re.IGNORECASE)]
+    final_specific_keywords = list(dict.fromkeys(specific_keywords)) #in order to remove duplicate results
+    # final_specific_keywords = str(final_specific_keywords) #to string in order to ensure tokenization is possible
+    # tokenized = nltk.sent_tokenize(final_specific_keywords, "dutch") #tokenizes the paragraph (i.e. ensure elements are cut into new sentence, starting at beginning of sentence). Use word_tokenize to do this for a particular sentence (instead of paragraph)
+    # for elem in tokenized:
+    #     if re.findall(keyword2, elem, re.IGNORECASE) and re.findall(keyword3, elem, re.IGNORECASE): #uses two tokens (one as start and second as validation) to filter results
+    #         tokenized_results.append(elem)
+    numbers = []
+    for item in final_specific_keywords:
+        for subitem in item.split():
+            if(subitem.isdigit()):
+                numbers.append(subitem)
+    # tokenized_results = [x for x in tokenized_results if type(x) ==int] #to extract only integers
+    return numbers
+
+
+def openfile():
+    selected_item = my_tree.focus()
+    details = my_tree.item(selected_item)
+    values = details.get('values')
+    try:
+        os.startfile(values[0])
+    except TypeError:
+        pass
+    try:
+        os.startfile(values[1])
+    except TypeError:
+        pass
+
+# Create entries and buttons for software(menu Search)
+my_entry1 = tk.Entry(my_frame1)
+my_button1 = tk.Button(my_frame1, text='Submit General|Highlight', command=submit_keywords) #Submit general keyword
+
+my_entry2 = tk.Entry(my_frame1)
+my_button2 = tk.Button(my_frame1, text='Submit Specific', command=submit_specific) #Submit specific keyword
+
+my_entry_split = tk.Entry(my_frame1)
+my_button_split = tk.Button(my_frame1, text='Submit Two Tokens', command=submit_token)
+
+my_button5 = tk.Button(my_frame1, text='Clear All', command=clear_keywords) #Submit specific keyword
+
+# Create buttons (menu Map)
+my_button = tk.Button(my_frame, text='Get Selection', command=get_selection) #Button to show selected item
+
+my_button3 = tk.Button(my_frame, text='Open File', command=openfile) #Button to open PDF file in folder
+
+# Create textbox
+my_textbox0 = tk.Text(my_frame0, padx=3, pady=3, font=('Luciana', 10)) #Text box to show directory + search keywords
+
+my_textbox = tk.Text(my_frame0, padx=60, pady=60, font=('Luciana', 10))
+
+# File open function
+def spreadsheet():
+    'Enables to upload an Excel file. Especially useful if programme is slow or when Excel results are combined'
+    global df
+    filename = filedialog.askopenfilename(
+        initialdir=r'C:\Users\gulya002',
+        title='Open A File')
+
+    if filename: #to ensure a file is opened
+        try:
+            filename = r'{}'.format(filename) #open file
+            df = pd.read_excel(filename) #read file with pandas
+        except ValueError: #typical error
+            my_label.config(text='File Couldnt Be Opened')
+        except FileNotFoundError: #typical error
+            my_label.config(text='File Couldnt Be Found')
+
+    #Clear old treeview
+    clear_tree()
+
+    #Set up new treeview
+    my_tree['column'] = list(df.columns) #to set treeview equal to df column
+    my_tree['show'] = 'headings'
+    #loop through column list for headers
+    for column in my_tree['column']:
+        my_tree.heading(column, text=column)
+
+    #put data in treeview
+    df_rows = df.to_numpy().tolist() #from pandas to numpy to python list
+    for row in df_rows:
+        my_tree.insert('', 'end', values=row)
+
+    #pack treeview finally
+    my_tree.pack()
+
+    #pack selection button
+    my_button.pack()
+    my_button3.pack()
+
+    #pack textbox
+    my_textbox.pack()
+
+def clear_entries():
+    my_entry1.delete(END)
+    my_entry2.delete(END)
+
+def clear_tree():
+    my_tree.delete(*my_tree.get_children())
+    my_textbox.delete(END)
+
+#Global variabel to store filepath
+file_path = []
+
+def enter_keywords():
+    my_entry1.grid(row=0, column=0)
+    my_button1.grid(row=0, column=1)
+    my_entry2.grid(row=1, column=0)
+    my_button2.grid(row=1, column=1)
+    my_entry_split.grid(row=2, column=0)
+    my_button_split.grid(row=2, column=1)
+    my_button5.grid(row=4)
+
+# Add a menu
+my_menu = Menu(root)
+root.config(menu=my_menu)
+
+# Add menu dropdowns
+file_menu0 = Menu(my_menu, tearoff=False)
+my_menu.add_cascade(label='1. Search', menu=file_menu0)
+file_menu0.add_command(label="Parameters", command=enter_keywords)
+file_menu0.add_command(label="Raw Search", command=search_PDF)
+file_menu0.add_command(label="Tokenized Search", command=search_PDF_tokenized_0)
+file_menu0.add_command(label="NER Search", command=search_PDF_tokenized_NER_0)
+#file_menu0.add_command(label="Number Search", command=search_PDF_tokenized_Int_0)
+file_menu0.add_command(label="Save as Excel", command=save_as_excel)
+
+file_menu = Menu(my_menu, tearoff=False)
+my_menu.add_cascade(label='2. Map', menu=file_menu)
+file_menu.add_command(label='Spreadsheet', command=spreadsheet)
+
+my_label = Label(root, text='')
+my_label.pack(pady=20)
+
+root.mainloop()
+
