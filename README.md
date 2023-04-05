@@ -2,7 +2,7 @@
 
 **Overview**
 
-The code is a Python program that allows users to search for keywords within PDF files. The program uses the tkinter GUI library to display a file selection window and a table showing the search results. Users can enter multiple keywords to search for and the program will highlight these keywords in the extracted text from the PDF files.
+The code is a Python program that allows users to search for keywords within PDF files. The program uses the tkinter GUI library to display a file selection window and a table showing the search results. Users can enter multiple keywords to search for and the program will highlight these keywords in the extracted text from the PDF files. A main feature of the program is to search for keywords twice (control f within control f, e.g. search for 'expert' and then words closeby expert such as 'costs' or 'independence').
 
 **Dependencies**
 
@@ -20,11 +20,13 @@ nltk
 
 Run the Python program.
 Click the "Choose Directory" button to select the folder containing the PDF files you want to search.
+Click the parameters button to enter the parameters (keywords). 
 Enter the keywords you want to search for in the "Submit General/Highlight", "Submit Specific", and "Submit Tokenized" fields. The first field is for general keywords, while the second and third fields are for specific keywords and tokenized keywords, respectively.
 Click the "Search" button to search for the keywords in the PDF files.
 The program will display a table showing the file names and the extracted text with the keywords highlighted. Users can click on a row to see the details of the search result.
 Users can click the "Save Results" button to save the search results as an Excel file.
 For the best results, it is recommendable to OCR all PDF files before using the program.
+Tip: use the functions in Excel to structure the results (e.g. find similar phrasins based on the alphabet. This works in particular well with the tokenized search which only filters sentences, rather than raw information).
 
 **Functions**
 
