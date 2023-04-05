@@ -1,10 +1,10 @@
 # Research
 
-Overview
+**Overview**
 
 The code is a Python program that allows users to search for keywords within PDF files. The program uses the tkinter GUI library to display a file selection window and a table showing the search results. Users can enter multiple keywords to search for and the program will highlight these keywords in the extracted text from the PDF files.
 
-Dependencies
+**Dependencies**
 
 The program uses several external libraries that need to be installed before running the code:
 
@@ -16,7 +16,7 @@ PyPDF2
 os
 nltk
 
-How to Use
+**How to Use**
 
 Run the Python program.
 Click the "Choose Directory" button to select the folder containing the PDF files you want to search.
@@ -25,7 +25,7 @@ Click the "Search" button to search for the keywords in the PDF files.
 The program will display a table showing the file names and the extracted text with the keywords highlighted. Users can click on a row to see the details of the search result.
 Users can click the "Save Results" button to save the search results as an Excel file.
 
-Functions
+**Functions**
 
 The program contains several functions:
 
@@ -38,6 +38,6 @@ search_PDF(): Searches for the keywords in the PDF files.
 search_PDF1(): Extracts text from a PDF file and searches for the keywords.
 clear_tree(): Clears the search results table.
 
-Disclaimer
+**Disclaimer**
 
 Please note that this code is provided as-is and may contain bugs or errors. The code is intended for educational purposes only and should not be used for any other purpose. The author assumes no responsibility or liability for any damage or loss caused by the use of this code.
