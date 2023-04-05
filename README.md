@@ -9,17 +9,11 @@ Dependencies
 The program uses several external libraries that need to be installed before running the code:
 
 re
-
 tkinter
-
 pandas
-
 glob
-
 PyPDF2
-
 os
-
 nltk
 
 How to Use
