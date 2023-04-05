@@ -26,7 +26,7 @@ Click the "Search" button to search for the keywords in the PDF files.
 The program will display a table showing the file names and the extracted text with the keywords highlighted. Users can click on a row to see the details of the search result.
 Users can click the "Save Results" button to save the search results as an Excel file.
 For the best results, it is recommendable to OCR all PDF files before using the program.
-Tip: use the functions in Excel to structure the results (e.g. find similar phrasins based on the alphabet. This works in particular well with the tokenized search which only filters sentences, rather than raw information).
+Tip: use the functions in Excel to structure the results of the program (e.g. find similar phrasings based on the alphabet. This works in particular well with the tokenized search function of the program which filters sentences, rather than raw information).
 
 **Functions**
 
