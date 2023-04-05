@@ -1,4 +1,4 @@
-# Research
+# Search Buddy (automatically search through PDFs)
 
 **Overview**
 
@@ -24,6 +24,7 @@ Enter the keywords you want to search for in the "Submit General/Highlight", "Su
 Click the "Search" button to search for the keywords in the PDF files.
 The program will display a table showing the file names and the extracted text with the keywords highlighted. Users can click on a row to see the details of the search result.
 Users can click the "Save Results" button to save the search results as an Excel file.
+For the best results, it is recommendable to OCR all PDF files before using the program.
 
 **Functions**
 
