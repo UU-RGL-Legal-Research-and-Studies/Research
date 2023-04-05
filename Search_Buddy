@@ -8,21 +8,6 @@ import PyPDF2 as PDF2
 import os
 import nltk
 
-#AIM: Search through Articles of Association (AoAs) in PDFs
-#Previous step: ensure AoAs have OCR (with Adobe)
-#Difference with previous version: uses NLP (Natural Language Processing) to remove irrelevant data and improve search quality
-#NB: for exe it is faster if onedir instead of onefile (less unpacking necessary)
-
-#Main priorities
-#TODO Build match search function (to find exact search)
-#TODO Ensure updated treeview can be exported as excel
-#TODO Show amount of results
-#TODO Speed up the programme
-#TODO Build a progress bar
-#TODO Modernise Software Look (CustomTkinter)
-#TODO Show keywords inserted
-#TODO Create faster version (or move replace to different new widget: tokenized (clean version e.g.)
-
 #STRUCTURE FOR THE SOFTWARE
 root = tk.Tk()
 root.title('SEARCH BUDDY - AoA Tokenized Version')
@@ -72,16 +57,6 @@ def get_selection():
         search_textbox(my_textbox, keywords[7], 'highlight yellow')
         search_textbox(my_textbox, keywords[8], 'highlight yellow')
         search_textbox(my_textbox, keywords[9], 'highlight yellow')
-        search_textbox(my_textbox, keywords[10], 'highlight yellow')
-        search_textbox(my_textbox, keywords[11], 'highlight yellow')
-        search_textbox(my_textbox, keywords[12], 'highlight yellow')
-        search_textbox(my_textbox, keywords[13], 'highlight yellow')
-        search_textbox(my_textbox, keywords[14], 'highlight yellow')
-        search_textbox(my_textbox, keywords[15], 'highlight yellow')
-        search_textbox(my_textbox, keywords[16], 'highlight yellow')
-        search_textbox(my_textbox, keywords[17], 'highlight yellow')
-        search_textbox(my_textbox, keywords[18], 'highlight yellow')
-        search_textbox(my_textbox, keywords[19], 'highlight yellow')
     except IndexError:
         pass
 
@@ -209,86 +184,6 @@ def search_PDF_tokenized_0():
     #pack textbox
     my_textbox.pack()
 
-def search_PDF_tokenized_NER_0():
-    'Opens the folder where PDFs are. Then ensures names of files and search results for files are appended'
-    file_names = filedialog.askdirectory()
-    for f in glob.glob(file_names + '\*.pdf'):
-        all_names.append(f)
-
-    #search within general keyword and first specific keyword based on def search_PDF1
-    for f in glob.glob(file_names + '\*.pdf'):
-        data = search_PDF_Tokenized_NER(f, str(keywords[0]), str(keywords[1]), str(keywords[2]), str(keywords[3])) #provides the keywords the used submitted
-        specific_keyword.append(data)
-
-    df = pd.DataFrame()
-    df['File'] = all_names
-    df[keywords[1]] = specific_keyword
-
-    #Clear old treeview
-    clear_tree()
-
-    #Set up new treeview
-    my_tree['column'] = list(df.columns) #to set treeview equal to df column
-    my_tree['show'] = 'headings'
-    #loop through column list for headers
-    for column in my_tree['column']:
-        my_tree.heading(column, text=column)
-
-    #put data in treeview
-    df_rows = df.to_numpy().tolist() #from pandas to numpy to python list
-    for row in df_rows:
-        my_tree.insert('', 'end', values=row)
-
-    #pack treeview finally
-    my_tree.pack()
-
-    #pack selection button
-    my_button.pack()
-    my_button3.pack()
-
-    #pack textbox
-    my_textbox.pack()
-
-def search_PDF_tokenized_Int_0():
-    'Opens the folder where PDFs are. Then ensures names of files and search results for files are appended'
-    file_names = filedialog.askdirectory()
-    for f in glob.glob(file_names + '\*.pdf'):
-        all_names.append(f)
-
-    #search within general keyword and first specific keyword based on def search_PDF1
-    for f in glob.glob(file_names + '\*.pdf'):
-        data = search_PDF_Tokenized_Int(f, str(keywords[0]), str(keywords[1]), str(keywords[2]), str(keywords[3])) #provides the keywords the used submitted
-        specific_keyword.append(data)
-
-    df = pd.DataFrame()
-    df['File'] = all_names
-    df[keywords[1]] = specific_keyword
-
-    #Clear old treeview
-    clear_tree()
-
-    #Set up new treeview
-    my_tree['column'] = list(df.columns) #to set treeview equal to df column
-    my_tree['show'] = 'headings'
-    #loop through column list for headers
-    for column in my_tree['column']:
-        my_tree.heading(column, text=column)
-
-    #put data in treeview
-    df_rows = df.to_numpy().tolist() #from pandas to numpy to python list
-    for row in df_rows:
-        my_tree.insert('', 'end', values=row)
-
-    #pack treeview finally
-    my_tree.pack()
-
-    #pack selection button
-    my_button.pack()
-    my_button3.pack()
-
-    #pack textbox
-    my_textbox.pack()
-
 def search_PDF1(f, keyword, keyword1):
     'Opens, reads and extracts PDF'
     'Uses two keywords. First keyword is general'
@@ -306,19 +201,8 @@ def search_PDF1(f, keyword, keyword1):
         for elem in all_text:
             if re.findall(keyword, elem, re.IGNORECASE):
                 general_keywords.append(elem)
-    specific_keywords = [elem1 for elem1 in general_keywords if re.findall(keyword1, elem1, re.IGNORECASE)] #switch to match/findall/other functions of RE + Remove Ignorecase to search for titles (specific search)?
+    specific_keywords = [elem1 for elem1 in general_keywords if re.findall(keyword1, elem1, re.IGNORECASE)]
     final_specific_keywords = list(dict.fromkeys(specific_keywords)) #in order to remove duplicate results
-    final_specific_keywords = str(final_specific_keywords)
-    final_specific_keywords = final_specific_keywords.replace("xa0", "")
-    final_specific_keywords = final_specific_keywords.replace("[", "")
-    final_specific_keywords = final_specific_keywords.replace("]", "")
-    final_specific_keywords = final_specific_keywords.replace("'", "")
-    final_specific_keywords = final_specific_keywords.replace("\\n", "")
-    final_specific_keywords = final_specific_keywords.replace("\\xad", " ")
-    final_specific_keywords = final_specific_keywords.replace(r"\ ", " ")
-    final_specific_keywords = final_specific_keywords.replace(r"\\", " ")
-    final_specific_keywords = final_specific_keywords.replace(r"--", "")
-    final_specific_keywords = final_specific_keywords.replace(r"*", "")
     return final_specific_keywords
 
 def search_PDF_Tokenized(f, keyword, keyword1, keyword2, keyword3):
@@ -345,111 +229,11 @@ def search_PDF_Tokenized(f, keyword, keyword1, keyword2, keyword3):
     specific_keywords = [elem1 for elem1 in general_keywords if re.findall(keyword1, elem1, re.IGNORECASE)]
     final_specific_keywords = list(dict.fromkeys(specific_keywords)) #in order to remove duplicate results
     final_specific_keywords = str(final_specific_keywords) #to string in order to ensure tokenization is possible
-    tokenized = nltk.sent_tokenize(final_specific_keywords, "dutch") #tokenizes the paragraph (i.e. ensure elements are cut into new sentence, starting at beginning of sentence). Use word_tokenize to do this for a particular sentence (instead of paragraph)
+    tokenized = nltk.sent_tokenize(final_specific_keywords, "dutch") #tokenizes the results (i.e. ensure elements are cut into new sentence, starting at beginning of sentence)
     for elem in tokenized:
         if re.findall(keyword2, elem, re.IGNORECASE) and re.findall(keyword3, elem, re.IGNORECASE): #uses two tokens (one as start and second as validation) to filter results
             tokenized_results.append(elem)
-    tokenized_results = str(tokenized_results)
-    tokenized_results = tokenized_results.replace("xa0", "")
-    tokenized_results = tokenized_results.replace("[", "")
-    tokenized_results = tokenized_results.replace("]", "")
-    tokenized_results = tokenized_results.replace("'", "")
-    tokenized_results = tokenized_results.replace("\\n", "")
-    tokenized_results = tokenized_results.replace("\\xad", " ")
-    tokenized_results = tokenized_results.replace(r"\ ", " ")
-    tokenized_results = tokenized_results.replace(r"\\", " ")
-    tokenized_results = tokenized_results.replace(r"--", "")
-    tokenized_results = tokenized_results.replace(r"*", "")
     return tokenized_results
-
-
-def search_PDF_Tokenized_NER(f, keyword, keyword1, keyword2, keyword3):
-    'Opens, reads and extracts PDF'
-    'Uses first two keywords to find raw data. First keyword is general'
-    'Second keyword searches within results of general keyword (control f within control f)'
-    'Third keyword is used to tokenize (i.e. extract sentence that contains keyword)'
-    'Fourth keyword is used to ensure validity (ensure third keyword is relevant in this context)'
-    'Uses Named Entity Recognition to search within results. Looks for persons and organizations'
-    'Tip1: if looking for one keyword only (instead of control f within control f), use same keyword twice (as general and specific keyword)'
-    'Tip2: use the same keywords in keyword and keyword1 in order to ensure all data is captured'
-    all_text = []
-    general_keywords = []
-    tokenized_results = []
-    final_tokenized_results = []
-    pdffile = open(f, 'rb')  # opens the PDF file
-    pdfreader = PDF2.PdfFileReader(pdffile)  # reads the PDF file
-    numOfPages = pdfreader.getNumPages()  # gets all page numbers
-    for i in range(0, numOfPages):  # loop through all pages
-        page = pdfreader.getPage(i)  # gets each page
-        page_extract = page.extractText()  # extract the text from PDF
-        all_text.append(page_extract)  # appends text
-        for elem in all_text:
-            if re.findall(keyword, elem, re.IGNORECASE):
-                general_keywords.append(elem)
-    specific_keywords = [elem1 for elem1 in general_keywords if re.findall(keyword1, elem1, re.IGNORECASE)]
-    final_specific_keywords = list(dict.fromkeys(specific_keywords)) #in order to remove duplicate results
-    final_specific_keywords = str(final_specific_keywords) #to string in order to ensure tokenization is possible
-    tokenized = nltk.sent_tokenize(final_specific_keywords, "dutch") #tokenizes the paragraph (i.e. ensure elements are cut into new sentence, starting at beginning of sentence). Use word_tokenize to do this for a particular sentence (instead of paragraph)
-    for elem in tokenized:
-        if re.findall(keyword2, elem, re.IGNORECASE) and re.findall(keyword3, elem, re.IGNORECASE): #uses two tokens (one as start and second as validation) to filter results
-            tokenized_results.append(elem)
-    for i in tokenized_results:
-        words = nltk.word_tokenize(i) #tokenizes each sentence (cuts off sentence), rather than entire paragraph
-        tagged = nltk.pos_tag(words) #create a tag for each word
-        named_ent = nltk.ne_chunk(tagged) #chunks the tags into specific named entities
-        for x in str(named_ent).split("\n"): #splits each sentence
-            if "ORGANIZATION" or "PERSON"and "/NNP" in x: #looks specifically for Organizations/Persons and NNPs (word with caps)
-                final_tokenized_results.append(x)
-    final_tokenized_results = str(final_tokenized_results)
-    final_tokenized_results = final_tokenized_results.replace("xa0", "")
-    final_tokenized_results = final_tokenized_results.replace("[", "")
-    final_tokenized_results = final_tokenized_results.replace("]", "")
-    final_tokenized_results = final_tokenized_results.replace("'", "")
-    final_tokenized_results = final_tokenized_results.replace("\\n", "")
-    final_tokenized_results = final_tokenized_results.replace("\\xad", " ")
-    final_tokenized_results = final_tokenized_results.replace(r"\ ", " ")
-    final_tokenized_results = final_tokenized_results.replace(r"\\", " ")
-    final_tokenized_results = final_tokenized_results.replace(r"--", "")
-    final_tokenized_results = final_tokenized_results.replace(r"*", "")
-    return final_tokenized_results
-
-def search_PDF_Tokenized_Int(f, keyword, keyword1, keyword2, keyword3):
-    'Opens, reads and extracts PDF'
-    'Uses first two keywords to find raw data. First keyword is general'
-    'Second keyword searches within results of general keyword (control f within control f)'
-    'Third keyword is used to tokenize (i.e. extract sentence that contains keyword)'
-    'Fourth keyword is used to ensure validity (ensure third keyword is relevant in this context)'
-    'Uses Named Entity Recognition to search within results. Looks for integers'
-    'Tip1: if looking for one keyword only (instead of control f within control f), use same keyword twice (as general and specific keyword)'
-    'Tip2: use the same keywords in keyword and keyword1 in order to ensure all data is captured'
-    all_text = []
-    general_keywords = []
-    tokenized_results = []
-    pdffile = open(f, 'rb')  # opens the PDF file
-    pdfreader = PDF2.PdfFileReader(pdffile)  # reads the PDF file
-    numOfPages = pdfreader.getNumPages()  # gets all page numbers
-    for i in range(0, numOfPages):  # loop through all pages
-        page = pdfreader.getPage(i)  # gets each page
-        page_extract = page.extractText()  # extract the text from PDF
-        all_text.append(page_extract)  # appends text
-        for elem in all_text:
-            if re.findall(keyword, elem, re.IGNORECASE):
-                general_keywords.append(elem)
-    specific_keywords = [elem1 for elem1 in general_keywords if re.findall(keyword1, elem1, re.IGNORECASE)]
-    final_specific_keywords = list(dict.fromkeys(specific_keywords)) #in order to remove duplicate results
-    # final_specific_keywords = str(final_specific_keywords) #to string in order to ensure tokenization is possible
-    # tokenized = nltk.sent_tokenize(final_specific_keywords, "dutch") #tokenizes the paragraph (i.e. ensure elements are cut into new sentence, starting at beginning of sentence). Use word_tokenize to do this for a particular sentence (instead of paragraph)
-    # for elem in tokenized:
-    #     if re.findall(keyword2, elem, re.IGNORECASE) and re.findall(keyword3, elem, re.IGNORECASE): #uses two tokens (one as start and second as validation) to filter results
-    #         tokenized_results.append(elem)
-    numbers = []
-    for item in final_specific_keywords:
-        for subitem in item.split():
-            if(subitem.isdigit()):
-                numbers.append(subitem)
-    # tokenized_results = [x for x in tokenized_results if type(x) ==int] #to extract only integers
-    return numbers
-
 
 def openfile():
     selected_item = my_tree.focus()
@@ -558,8 +342,6 @@ my_menu.add_cascade(label='1. Search', menu=file_menu0)
 file_menu0.add_command(label="Parameters", command=enter_keywords)
 file_menu0.add_command(label="Raw Search", command=search_PDF)
 file_menu0.add_command(label="Tokenized Search", command=search_PDF_tokenized_0)
-file_menu0.add_command(label="NER Search", command=search_PDF_tokenized_NER_0)
-#file_menu0.add_command(label="Number Search", command=search_PDF_tokenized_Int_0)
 file_menu0.add_command(label="Save as Excel", command=save_as_excel)
 
 file_menu = Menu(my_menu, tearoff=False)
