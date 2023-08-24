@@ -2,7 +2,7 @@
 
 **Overview**
 
-The code is a Python program that allows users to search for keywords within PDF files. The program uses the tkinter GUI library to display a file selection window and a table showing the search results. Users can enter multiple keywords to search for and the program will highlight these keywords in the extracted text from the PDF files. A main feature of the program is to search for keywords twice (control f within control f, e.g. search for 'expert' and then words closeby expert such as 'costs' or 'independence').
+The code is a Python program that allows users to search for keywords within PDF files. The program uses the tkinter GUI library to display a file selection window and a table showing the search results. Users can enter multiple keywords to search for and the program will highlight these keywords in the extracted text from the PDF files. A main feature of the program is to search for keywords twice (control f within control f, e.g. search for 'expert' and then words closeby expert such as 'costs' or 'independence'). The results of the PDF files can be converted to an Excel-file. Excel-files can also be read by the program to continue the analysis at a later stage.  
 
 **Dependencies**
 
